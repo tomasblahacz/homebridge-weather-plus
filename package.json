@@ -1,6 +1,6 @@
 {
-  "name": "homebridge-weather-plus",
-  "displayName": "Weather Plus",
+  "name": "homebridge-weather-plus-tb",
+  "displayName": "Weather Plus TB",
   "version": "3.4.0",
   "description": "A comprehensive weather plugin for homekit with current observations, forecasts and history.",
   "license": "MIT",
