@@ -28,7 +28,7 @@ module.exports = function (homebridge)
 	FakeGatoHistoryService = require("fakegato-history")(homebridge);
 
 	// Start platform
-	homebridge.registerPlatform("homebridge-weather-plus", "WeatherPlus", WeatherPlusPlatform);
+	homebridge.registerPlatform("homebridge-weather-plus-tb", "WeatherPlus", WeatherPlusPlatform);
 };
 
 function WeatherPlusPlatform(_log, _config)
@@ -427,16 +427,28 @@ WeatherPlusPlatform.prototype = {
 				}
 				else if (name === "WindSpeed")
 				{
-					if (config.thresholdWindSpeed === undefined)
+					const isAboveThreshold = config.thresholdWindSpeed === undefined ? value >= 5 : convertedValue >= config.thresholdWindSpeed;
+					const holdMs = (config.holdWindSpeed || 10) * 60 * 1000;
+					const now = Date.now();
+
+					if (isAboveThreshold)
 					{
-						accessory.WindSpeedService.setCharacteristic(Characteristic.ContactSensorState, value >= 5 ? 1 : 0);
+						accessory._windSpeedLastTriggered = now;
+						accessory.WindSpeedService.setCharacteristic(Characteristic.ContactSensorState, 1);
 					}
-					else
+					else if (!accessory._windSpeedLastTriggered || (now - accessory._windSpeedLastTriggered) > holdMs)
 					{
-						accessory.WindSpeedService.setCharacteristic(Characteristic.ContactSensorState, convertedValue >= config.thresholdWindSpeed ? 1 : 0);
+						accessory.WindSpeedService.setCharacteristic(Characteristic.ContactSensorState, 0);
 					}
-					accessory.WindSpeedService.setCharacteristic(Characteristic.ConfiguredName, "Wind Speedː " + convertedValue + " " + accessory.WindSpeedService.unit);
-					accessory.WindSpeedService.setCharacteristic(Characteristic.Name, "Wind Speedː " + convertedValue + " " + accessory.WindSpeedService.unit);
+					// else: within hold period — keep sensor open
+
+					accessory.WindSpeedService.setCharacteristic(Characteristic.ConfiguredName, "Wind Alertː " + convertedValue + " " + accessory.WindSpeedService.unit);
+					accessory.WindSpeedService.setCharacteristic(Characteristic.Name, "Wind Alertː " + convertedValue + " " + accessory.WindSpeedService.unit);
+
+					// LightSensor exposes the raw numeric speed for threshold automations in Apple Home
+					accessory.WindSpeedLevelService.setCharacteristic(Characteristic.CurrentAmbientLightLevel, convertedValue || 0.0001);
+					accessory.WindSpeedLevelService.setCharacteristic(Characteristic.ConfiguredName, "Wind Speedː " + convertedValue + " " + accessory.WindSpeedService.unit);
+					accessory.WindSpeedLevelService.setCharacteristic(Characteristic.Name, "Wind Speedː " + convertedValue + " " + accessory.WindSpeedService.unit);
 				}
 				else if(name === "RainDay") {
 					accessory.RainDayService.setCharacteristic(Characteristic.OccupancyDetected, value > 0);

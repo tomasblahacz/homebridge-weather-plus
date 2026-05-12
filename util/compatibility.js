@@ -104,9 +104,17 @@ const createService = function (that, name, Service, Characteristic, CustomChara
 		let temporaryService = new Service.OccupancySensor("Temporary");
 		temporaryService.addCharacteristic(CustomCharacteristic.WindSpeed);
 
-		that.WindSpeedService = new Service.ContactSensor("Wind Speed", "Wind Speed");
+		that.WindSpeedService = new Service.ContactSensor("Wind Alert", "Wind Alert");
 		that.WindSpeedService.unit = temporaryService.getCharacteristic(CustomCharacteristic.WindSpeed).props.unit;
-		that.WindSpeedService.getCharacteristic(Characteristic.ConfiguredName).updateValue("Wind Speed");
+		that.WindSpeedService.getCharacteristic(Characteristic.ConfiguredName).updateValue("Wind Alert");
+
+		that.WindSpeedLevelService = new Service.LightSensor("Wind Speed", "Wind Speed Level");
+		that.WindSpeedLevelService.getCharacteristic(Characteristic.CurrentAmbientLightLevel).setProps({
+			minValue: 0.0001,
+			maxValue: 200000,
+			minStep: 0.1
+		});
+		that.WindSpeedLevelService.getCharacteristic(Characteristic.ConfiguredName).updateValue("Wind Speed");
 	}
 	if (name === "RainDay")
 	{
@@ -138,6 +146,7 @@ const getServices = function (that)
 		{
 			let service = name + "Service";
 			if (service in that) services.push(that[service]);
+			if (name === "WindSpeed" && "WindSpeedLevelService" in that) services.push(that.WindSpeedLevelService);
 		}
 	});
 	return services;
