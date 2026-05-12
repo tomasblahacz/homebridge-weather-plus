@@ -3,6 +3,18 @@
 
 const types = ["AirPressure", "CloudCover", "DewPoint", "Humidity", "RainBool", "SnowBool", "TemperatureMin", "TemperatureApparent", "UVIndex", "Visibility", "WindDirection", "WindSpeed", "RainDay"];
 
+// 8-point compass directions used for separate occupancy sensors
+const WIND_DIRS_8 = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+
+// Maps 16-point compass strings (from converter.getWindDirection) to 8-point
+const windDir16To8 = {
+	'N': 'N',  'NNE': 'NE', 'NE': 'NE', 'ENE': 'E',
+	'E': 'E',  'ESE': 'SE', 'SE': 'SE', 'SSE': 'S',
+	'S': 'S',  'SSW': 'SW', 'SW': 'SW', 'WSW': 'W',
+	'W': 'W',  'WNW': 'NW', 'NW': 'NW', 'NNW': 'N',
+	'Variable': null
+};
+
 const createService = function (that, name, Service, Characteristic, CustomCharacteristic)
 {
 	if (name === "AirPressure")
@@ -41,7 +53,7 @@ const createService = function (that, name, Service, Characteristic, CustomChara
 	}
 	if (name === "RainBool")
 	{
-		that.RainBoolService = new Service.OccupancySensor("Rain", "Rain");
+		that.RainBoolService = new Service.ContactSensor("Rain", "Rain");
 		that.RainBoolService.getCharacteristic(Characteristic.ConfiguredName).updateValue("Rain");
 	}
 	if (name === "SnowBool")
@@ -78,8 +90,13 @@ const createService = function (that, name, Service, Characteristic, CustomChara
 	}
 	if (name === "WindDirection")
 	{
-		that.WindDirectionService = new Service.OccupancySensor("Wind Direction", "Wind Dir");
-		that.WindDirectionService.getCharacteristic(Characteristic.ConfiguredName).updateValue("Wind Direction");
+		// Create one OccupancySensor per 8-point compass direction.
+		// Only the sensor matching the current wind direction will be "occupied",
+		// so HomeKit automations can trigger per direction (e.g. close south curtains when Wind S is detected).
+		WIND_DIRS_8.forEach(dir => {
+			that['Wind' + dir + 'Service'] = new Service.ContactSensor('Wind ' + dir, 'Wind ' + dir);
+			that['Wind' + dir + 'Service'].getCharacteristic(Characteristic.ConfiguredName).updateValue('Wind ' + dir);
+		});
 	}
 	if (name === "WindSpeed")
 	{
@@ -87,7 +104,7 @@ const createService = function (that, name, Service, Characteristic, CustomChara
 		let temporaryService = new Service.OccupancySensor("Temporary");
 		temporaryService.addCharacteristic(CustomCharacteristic.WindSpeed);
 
-		that.WindSpeedService = new Service.OccupancySensor("Wind Speed", "Wind Speed");
+		that.WindSpeedService = new Service.ContactSensor("Wind Speed", "Wind Speed");
 		that.WindSpeedService.unit = temporaryService.getCharacteristic(CustomCharacteristic.WindSpeed).props.unit;
 		that.WindSpeedService.getCharacteristic(Characteristic.ConfiguredName).updateValue("Wind Speed");
 	}
@@ -109,10 +126,18 @@ const getServices = function (that)
 	let services = [];
 	types.forEach((name) =>
 	{
-		let service = name + "Service";
-		if (service in that)
+		if (name === "WindDirection")
 		{
-			services.push(that[service]);
+			// WindDirection expands to 8 directional sensors instead of one
+			WIND_DIRS_8.forEach(dir => {
+				const key = 'Wind' + dir + 'Service';
+				if (key in that) services.push(that[key]);
+			});
+		}
+		else
+		{
+			let service = name + "Service";
+			if (service in that) services.push(that[service]);
 		}
 	});
 	return services;
@@ -120,6 +145,8 @@ const getServices = function (that)
 
 module.exports = {
 	types,
+	WIND_DIRS_8,
+	windDir16To8,
 	createService,
 	getServices
 };

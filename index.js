@@ -379,9 +379,13 @@ WeatherPlusPlatform.prototype = {
 				{
 					accessory.HumidityService.setCharacteristic(Characteristic.CurrentRelativeHumidity, convertedValue);
 				}
-				else if (["RainBool", "SnowBool"].includes(name))
+				else if (name === "RainBool")
 				{
-					accessory[name + "Service"].setCharacteristic(Characteristic.OccupancyDetected, convertedValue);
+					accessory.RainBoolService.setCharacteristic(Characteristic.ContactSensorState, convertedValue ? 1 : 0);
+				}
+				else if (name === "SnowBool")
+				{
+					accessory.SnowBoolService.setCharacteristic(Characteristic.OccupancyDetected, convertedValue);
 				}
 				else if (name === "TemperatureMin")
 				{
@@ -415,18 +419,21 @@ WeatherPlusPlatform.prototype = {
 				}
 				else if (name === "WindDirection")
 				{
-					accessory.WindDirectionService.setCharacteristic(Characteristic.ConfiguredName, "Wind Dirː " + convertedValue);
-					accessory.WindDirectionService.setCharacteristic(Characteristic.Name, "Wind Dirː " + convertedValue);
+					const dir8 = compatibility.windDir16To8[value] || null;
+					compatibility.WIND_DIRS_8.forEach(dir => {
+						const svc = accessory['Wind' + dir + 'Service'];
+						if (svc) svc.setCharacteristic(Characteristic.ContactSensorState, dir8 === dir ? 1 : 0);
+					});
 				}
 				else if (name === "WindSpeed")
 				{
 					if (config.thresholdWindSpeed === undefined)
 					{
-						accessory.WindSpeedService.setCharacteristic(Characteristic.OccupancyDetected, value >= 5);
+						accessory.WindSpeedService.setCharacteristic(Characteristic.ContactSensorState, value >= 5 ? 1 : 0);
 					}
 					else
 					{
-						accessory.WindSpeedService.setCharacteristic(Characteristic.OccupancyDetected, convertedValue >= config.thresholdWindSpeed);
+						accessory.WindSpeedService.setCharacteristic(Characteristic.ContactSensorState, convertedValue >= config.thresholdWindSpeed ? 1 : 0);
 					}
 					accessory.WindSpeedService.setCharacteristic(Characteristic.ConfiguredName, "Wind Speedː " + convertedValue + " " + accessory.WindSpeedService.unit);
 					accessory.WindSpeedService.setCharacteristic(Characteristic.Name, "Wind Speedː " + convertedValue + " " + accessory.WindSpeedService.unit);
