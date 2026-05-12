@@ -419,10 +419,9 @@ WeatherPlusPlatform.prototype = {
 				}
 				else if (name === "WindDirection")
 				{
-					const dir8 = compatibility.windDir16To8[value] || null;
-					compatibility.WIND_DIRS_8.forEach(dir => {
+					compatibility.WIND_DIRS_4.forEach(dir => {
 						const svc = accessory['Wind' + dir + 'Service'];
-						if (svc) svc.setCharacteristic(Characteristic.ContactSensorState, dir8 === dir ? 1 : 0);
+						if (svc) svc.setCharacteristic(Characteristic.ContactSensorState, value.includes(dir) ? 1 : 0);
 					});
 				}
 				else if (name === "WindSpeed")

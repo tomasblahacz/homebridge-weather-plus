@@ -3,17 +3,9 @@
 
 const types = ["AirPressure", "CloudCover", "DewPoint", "Humidity", "RainBool", "SnowBool", "TemperatureMin", "TemperatureApparent", "UVIndex", "Visibility", "WindDirection", "WindSpeed", "RainDay"];
 
-// 8-point compass directions used for separate occupancy sensors
-const WIND_DIRS_8 = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
-
-// Maps 16-point compass strings (from converter.getWindDirection) to 8-point
-const windDir16To8 = {
-	'N': 'N',  'NNE': 'NE', 'NE': 'NE', 'ENE': 'E',
-	'E': 'E',  'ESE': 'SE', 'SE': 'SE', 'SSE': 'S',
-	'S': 'S',  'SSW': 'SW', 'SW': 'SW', 'WSW': 'W',
-	'W': 'W',  'WNW': 'NW', 'NW': 'NW', 'NNW': 'N',
-	'Variable': null
-};
+// 4 cardinal directions — each sensor activates when the wind direction string contains that letter.
+// e.g. "NNW" activates both N and W, "SSE" activates both S and E.
+const WIND_DIRS_4 = ['N', 'E', 'S', 'W'];
 
 const createService = function (that, name, Service, Characteristic, CustomCharacteristic)
 {
@@ -90,10 +82,10 @@ const createService = function (that, name, Service, Characteristic, CustomChara
 	}
 	if (name === "WindDirection")
 	{
-		// Create one OccupancySensor per 8-point compass direction.
-		// Only the sensor matching the current wind direction will be "occupied",
-		// so HomeKit automations can trigger per direction (e.g. close south curtains when Wind S is detected).
-		WIND_DIRS_8.forEach(dir => {
+		// One ContactSensor per cardinal direction (N, E, S, W).
+		// Multiple sensors can be active simultaneously — e.g. NNW activates both N and W —
+		// so automations work without needing OR logic in HomeKit.
+		WIND_DIRS_4.forEach(dir => {
 			that['Wind' + dir + 'Service'] = new Service.ContactSensor('Wind ' + dir, 'Wind ' + dir);
 			that['Wind' + dir + 'Service'].getCharacteristic(Characteristic.ConfiguredName).updateValue('Wind ' + dir);
 		});
@@ -136,8 +128,7 @@ const getServices = function (that)
 	{
 		if (name === "WindDirection")
 		{
-			// WindDirection expands to 8 directional sensors instead of one
-			WIND_DIRS_8.forEach(dir => {
+			WIND_DIRS_4.forEach(dir => {
 				const key = 'Wind' + dir + 'Service';
 				if (key in that) services.push(that[key]);
 			});
@@ -154,8 +145,7 @@ const getServices = function (that)
 
 module.exports = {
 	types,
-	WIND_DIRS_8,
-	windDir16To8,
+	WIND_DIRS_4,
 	createService,
 	getServices
 };
