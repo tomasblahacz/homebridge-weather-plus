@@ -310,6 +310,17 @@ WeatherPlusPlatform.prototype = {
 		setTimeout(this.updateWeather.bind(this), (this.interval) * 60 * 1000);
 	},
 
+	// Update the 4 directional wind speed sensors using the latest stored direction and speed
+	updateDirectionalWindSpeeds: function (accessory, compatibility, Characteristic)
+	{
+		const dir = accessory._currentWindDir || '';
+		const speed = accessory._currentWindSpeed || 0;
+		compatibility.WIND_DIRS_4.forEach(d => {
+			const svc = accessory['Wind' + d + 'Service'];
+			if (svc) svc.setCharacteristic(Characteristic.CurrentTemperature, dir.includes(d) ? speed : 0);
+		});
+	},
+
 	// Save changes from update in characteristics
 	saveCharacteristic: function (accessory, name, value, type)
 	{
@@ -419,10 +430,8 @@ WeatherPlusPlatform.prototype = {
 				}
 				else if (name === "WindDirection")
 				{
-					compatibility.WIND_DIRS_4.forEach(dir => {
-						const svc = accessory['Wind' + dir + 'Service'];
-						if (svc) svc.setCharacteristic(Characteristic.ContactSensorState, value.includes(dir) ? 1 : 0);
-					});
+					accessory._currentWindDir = value;
+					this.updateDirectionalWindSpeeds(accessory, compatibility, Characteristic);
 				}
 				else if (name === "WindSpeed")
 				{
@@ -444,10 +453,12 @@ WeatherPlusPlatform.prototype = {
 					accessory.WindSpeedService.setCharacteristic(Characteristic.ConfiguredName, "Wind Alertː " + convertedValue + " " + accessory.WindSpeedService.unit);
 					accessory.WindSpeedService.setCharacteristic(Characteristic.Name, "Wind Alertː " + convertedValue + " " + accessory.WindSpeedService.unit);
 
-					// TemperatureSensor exposes the raw numeric speed for threshold automations in Apple Home
 					accessory.WindSpeedLevelService.setCharacteristic(Characteristic.CurrentTemperature, convertedValue);
 					accessory.WindSpeedLevelService.setCharacteristic(Characteristic.ConfiguredName, "Wind Speedː " + convertedValue + " " + accessory.WindSpeedService.unit);
 					accessory.WindSpeedLevelService.setCharacteristic(Characteristic.Name, "Wind Speedː " + convertedValue + " " + accessory.WindSpeedService.unit);
+
+					accessory._currentWindSpeed = convertedValue;
+					this.updateDirectionalWindSpeeds(accessory, compatibility, Characteristic);
 				}
 				else if(name === "RainDay") {
 					accessory.RainDayService.setCharacteristic(Characteristic.OccupancyDetected, value > 0);

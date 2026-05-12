@@ -82,11 +82,17 @@ const createService = function (that, name, Service, Characteristic, CustomChara
 	}
 	if (name === "WindDirection")
 	{
-		// One ContactSensor per cardinal direction (N, E, S, W).
-		// Multiple sensors can be active simultaneously — e.g. NNW activates both N and W —
-		// so automations work without needing OR logic in HomeKit.
+		// One TemperatureSensor per cardinal direction (N, E, S, W).
+		// Shows the current wind speed when wind has that directional component, 0 otherwise.
+		// e.g. NNW at 30 km/h sets Wind N = 30 and Wind W = 30, Wind E = 0, Wind S = 0.
+		// Single automation condition: "Wind S above 20° → close south curtains".
 		WIND_DIRS_4.forEach(dir => {
-			that['Wind' + dir + 'Service'] = new Service.ContactSensor('Wind ' + dir, 'Wind ' + dir);
+			that['Wind' + dir + 'Service'] = new Service.TemperatureSensor('Wind ' + dir, 'Wind ' + dir);
+			that['Wind' + dir + 'Service'].getCharacteristic(Characteristic.CurrentTemperature).setProps({
+				minValue: 0,
+				maxValue: 200,
+				minStep: 0.1
+			});
 			that['Wind' + dir + 'Service'].getCharacteristic(Characteristic.ConfiguredName).updateValue('Wind ' + dir);
 		});
 	}
