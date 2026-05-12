@@ -108,10 +108,10 @@ const createService = function (that, name, Service, Characteristic, CustomChara
 		that.WindSpeedService.unit = temporaryService.getCharacteristic(CustomCharacteristic.WindSpeed).props.unit;
 		that.WindSpeedService.getCharacteristic(Characteristic.ConfiguredName).updateValue("Wind Alert");
 
-		that.WindSpeedLevelService = new Service.LightSensor("Wind Speed", "Wind Speed Level");
-		that.WindSpeedLevelService.getCharacteristic(Characteristic.CurrentAmbientLightLevel).setProps({
-			minValue: 0.0001,
-			maxValue: 200000,
+		that.WindSpeedLevelService = new Service.TemperatureSensor("Wind Speed", "Wind Speed Level");
+		that.WindSpeedLevelService.getCharacteristic(Characteristic.CurrentTemperature).setProps({
+			minValue: 0,
+			maxValue: 200,
 			minStep: 0.1
 		});
 		that.WindSpeedLevelService.getCharacteristic(Characteristic.ConfiguredName).updateValue("Wind Speed");

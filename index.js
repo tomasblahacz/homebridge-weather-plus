@@ -445,8 +445,8 @@ WeatherPlusPlatform.prototype = {
 					accessory.WindSpeedService.setCharacteristic(Characteristic.ConfiguredName, "Wind Alertː " + convertedValue + " " + accessory.WindSpeedService.unit);
 					accessory.WindSpeedService.setCharacteristic(Characteristic.Name, "Wind Alertː " + convertedValue + " " + accessory.WindSpeedService.unit);
 
-					// LightSensor exposes the raw numeric speed for threshold automations in Apple Home
-					accessory.WindSpeedLevelService.setCharacteristic(Characteristic.CurrentAmbientLightLevel, convertedValue || 0.0001);
+					// TemperatureSensor exposes the raw numeric speed for threshold automations in Apple Home
+					accessory.WindSpeedLevelService.setCharacteristic(Characteristic.CurrentTemperature, convertedValue);
 					accessory.WindSpeedLevelService.setCharacteristic(Characteristic.ConfiguredName, "Wind Speedː " + convertedValue + " " + accessory.WindSpeedService.unit);
 					accessory.WindSpeedLevelService.setCharacteristic(Characteristic.Name, "Wind Speedː " + convertedValue + " " + accessory.WindSpeedService.unit);
 				}
